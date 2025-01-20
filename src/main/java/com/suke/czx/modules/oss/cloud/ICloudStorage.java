@@ -2,6 +2,7 @@ package com.suke.czx.modules.oss.cloud;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import com.suke.czx.modules.oss.entity.SysOss;
 
 import java.io.InputStream;
 import java.util.UUID;
@@ -69,4 +70,5 @@ public interface ICloudStorage {
      */
     String uploadSuffix(InputStream inputStream, String suffix);
 
+    String getUrl(SysOss ossEntity);
 }

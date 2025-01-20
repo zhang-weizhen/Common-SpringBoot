@@ -61,10 +61,9 @@ public class SysOssController extends AbstractController {
         if (file.isEmpty()) {
             throw new RRException("上传文件不能为空");
         }
-
         //上传文件
         String suffix = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
-        String url = "";
+        String url = iCloudStorage.uploadSuffix(file.getBytes(), suffix);
 
         //保存文件信息
         SysOss ossEntity = new SysOss();
@@ -72,7 +71,7 @@ public class SysOssController extends AbstractController {
         ossEntity.setCreateDate(new Date());
         sysOssService.save(ossEntity);
 
-        return R.ok().put("url", url);
+        return R.ok().setData(ossEntity);
     }
 
     /**
@@ -136,5 +135,10 @@ public class SysOssController extends AbstractController {
         sysOssService.removeByIds(Arrays.asList(ids));
         return R.ok();
     }
-
+    @GetMapping(value = "/getUrl/{id}")
+    public R getUrl(@PathVariable("id") String id){
+        SysOss sysOss = sysOssService.getById(id);
+        sysOss.setUrl(iCloudStorage.getUrl(sysOss));
+        return R.ok().setData(sysOss);
+    }
 }

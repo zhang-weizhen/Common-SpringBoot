@@ -52,9 +52,9 @@ public class SysUserController extends AbstractController {
         QueryWrapper<SysUser> queryWrapper = new QueryWrapper<>();
 
         //只有超级管理员，才能查看所有管理员列表
-        if (!getUserId().equals(Constant.SUPER_ADMIN)) {
-            queryWrapper.lambda().eq(SysUser::getCreateUserId, getUserId());
-        }
+//        if (!getUserId().equals(Constant.SUPER_ADMIN)) {
+//            queryWrapper.lambda().eq(SysUser::getCreateUserId, getUserId());
+//        }
 
         final String keyword = mpPageConvert.getKeyword(params);
         if (StrUtil.isNotEmpty(keyword)) {
@@ -158,5 +158,20 @@ public class SysUserController extends AbstractController {
         }
         sysUserService.removeById(user.getUserId());
         return R.ok();
+    }
+
+    /**
+     * 查询用户
+     */
+    @SysLog("查询用户")
+    @GetMapping(value = "/detail/{id}")
+    public R delete(@PathVariable("id") String id) {
+
+        SysUser user = sysUserService.getById(id);
+        UserInfoVO userInfo = new UserInfoVO();
+        userInfo.setUserId(user.getUserId());
+        userInfo.setUserName(user.getUsername());
+        userInfo.setName(user.getName());
+        return R.ok().setData(userInfo);
     }
 }

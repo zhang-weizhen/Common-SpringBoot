@@ -4,12 +4,16 @@ import com.qiniu.http.Response;
 import com.qiniu.storage.UploadManager;
 import com.qiniu.util.Auth;
 import com.suke.czx.common.exception.RRException;
+import com.suke.czx.modules.oss.entity.SysOss;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 /**
  * 七牛云存储
@@ -18,6 +22,7 @@ import java.io.InputStream;
  * @email object_czx@163.com
  * @date 2017-03-25 15:41
  */
+@Slf4j
 @Component
 @AllArgsConstructor
 public class QiniuCloudStorageService implements ICloudStorage {
@@ -59,5 +64,16 @@ public class QiniuCloudStorageService implements ICloudStorage {
     @Override
     public String uploadSuffix(InputStream inputStream, String suffix) {
         return upload(inputStream, getPath(qiniuProperties.getPrefix(), suffix));
+    }
+    @Override
+    public String getUrl(SysOss ossEntity){
+        String fileName = ossEntity.getUrl();
+
+        String  encodedFileName = "http://" + fileName;
+
+
+        long expireInSeconds = 3600;//1小时，可以自定义链接过期时间
+        String finalUrl = auth.privateDownloadUrl(encodedFileName, expireInSeconds);
+        return finalUrl;
     }
 }

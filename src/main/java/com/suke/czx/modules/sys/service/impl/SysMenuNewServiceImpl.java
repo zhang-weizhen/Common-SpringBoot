@@ -47,7 +47,7 @@ public class SysMenuNewServiceImpl extends ServiceImpl<SysMenuNewMapper, SysMenu
         if (menuId != null) {
             queryWrapper.lambda().eq(SysMenuNew::getParentId, menuId);
         }
-        queryWrapper.lambda().eq(SysMenuNew::isDisabled, true);
+//        queryWrapper.lambda().eq(SysMenuNew::isDisabled, true);
         List<SysMenuNew> sysMenus = sysMenuNewMapper.selectList(queryWrapper);
         if (CollUtil.isNotEmpty(sysMenus)) {
             sysMenus.forEach(sysMenu -> {

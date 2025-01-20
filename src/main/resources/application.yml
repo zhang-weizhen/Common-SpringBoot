@@ -24,12 +24,12 @@ spring:
 
 swagger:
   enable: true
-  title: X-SpringBoot API
+  title: Common-SpringBoot API
   description: API 描述
   version: 5.0.0
-  author: czx
-  url: https://github.com/yzcheng90/X-SpringBoot
-  email: object_czx@163.com
+  author: zwz
+  url: https://github.com/zhang-weizhen/Common-SpringBoot
+  email: 602459150@qq.com
 
 # autofull 配置
 autofull:
@@ -41,10 +41,10 @@ autofull:
 
 #七牛 AK  和  SK可以去密钥管理中查询
 qiniu:
-  accessKey: 2222
-  secretKey: 33333
-  bucketName: qh-file
-  domain: https://www.qiniu.com
+  accessKey: iLL-WNOhZOpZBCfvn-nGQoeBZcDq9x-U6IQnOJXa
+  secretKey: aLJoQD7_mnpyFA75oEHQL5eC9RwmrqTTKdPkX2pQ
+  bucketName: zwz-info
+  domain: qny.zwzcloud.work
   prefix: task
 
 # mybaits-plus配置
