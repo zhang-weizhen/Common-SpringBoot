@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.suke.czx.modules.order.mapper.SystemOrderMapper">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.suke.czx.modules.order.entity.SystemOrder" id="SystemOrderMap">
+        <result property="id" column="id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="actualExpressFee" column="actual_express_fee"/>
+        <result property="actualFare" column="actual_fare"/>
+        <result property="actualOutgoingPayment" column="actual_outgoing_payment"/>
+        <result property="actualRepayment" column="actual_repayment"/>
+        <result property="address" column="address"/>
+        <result property="advanceAmount" column="advance_amount"/>
+        <result property="advanceReceivedAmount" column="advance_received_amount"/>
+        <result property="contacts" column="contacts"/>
+        <result property="customCode" column="custom_code"/>
+        <result property="customName" column="custom_name"/>
+        <result property="deliveryTime" column="delivery_time"/>
+        <result property="expressCollectionAmount" column="express_collection_amount"/>
+        <result property="expressFee" column="express_fee"/>
+        <result property="expressReceivedAmount" column="express_received_amount"/>
+        <result property="fare" column="fare"/>
+        <result property="finalPaymentAmount" column="final_payment_amount"/>
+        <result property="finalReceivedAmount" column="final_received_amount"/>
+        <result property="imageAttachment" column="image_attachment"/>
+        <result property="materialName" column="material_name"/>
+        <result property="orderStatus" column="order_status"/>
+        <result property="outGoing" column="out_going"/>
+        <result property="outGoingAmount" column="out_going_amount"/>
+        <result property="outGoingSupplier" column="out_going_supplier"/>
+        <result property="outgoingPayment" column="outgoing_payment"/>
+        <result property="processNum" column="process_num"/>
+        <result property="processingTechnology" column="processing_technology"/>
+        <result property="receivedAmount" column="received_amount"/>
+        <result property="remark" column="remark"/>
+        <result property="repayment" column="repayment"/>
+        <result property="supplierCollectionAmount" column="supplier_collection_amount"/>
+        <result property="supplierReceivedAmount" column="supplier_received_amount"/>
+        <result property="telephone" column="telephone"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="weight" column="weight"/>
+        <result property="materialCode" column="material_code"/>
+    </resultMap>
+    <resultMap type="com.suke.czx.modules.order.dto.UserPerformanceDto" id="UserPerformanceMap">
+        <result property="totalAmount" column="total_amount"/>
+        <result property="weight" column="weight"/>
+        <result property="createTime" column="create_time"/>
+        <result property="orderNum" column="order_num"/>
+        <result property="processNum" column="process_num"/>
+    </resultMap>
+    <select id="getUserPerformance" resultMap="UserPerformanceMap">
+       select DATE(create_time) as create_time, count(*) as order_num, sum(weight) as weight, sum(process_num) as process_num,sum(total_amount) as total_amount
+        from system_order where create_by = '${userId}' and
+        create_time BETWEEN #{startTime} AND #{endTime}
+
+        group by DATE(create_time)
+    </select>
+</mapper>
