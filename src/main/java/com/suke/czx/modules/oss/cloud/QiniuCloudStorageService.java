@@ -47,6 +47,11 @@ public class QiniuCloudStorageService implements ICloudStorage {
     }
 
     @Override
+    public String uploadByName(byte[] data, String name) {
+        return upload(data, getPathByName(qiniuProperties.getPrefix(), name));
+    }
+
+    @Override
     public String upload(InputStream inputStream, String path) {
         try {
             byte[] data = IOUtils.toByteArray(inputStream);
@@ -67,6 +72,9 @@ public class QiniuCloudStorageService implements ICloudStorage {
     }
     @Override
     public String getUrl(SysOss ossEntity){
+        if (ossEntity == null) {
+            return "";
+        }
         String fileName = ossEntity.getUrl();
 
         String  encodedFileName = "http://" + fileName;

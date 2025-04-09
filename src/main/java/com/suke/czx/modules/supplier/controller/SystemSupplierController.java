@@ -40,6 +40,9 @@ public class SystemSupplierController extends AbstractController {
         if (StrUtil.isNotEmpty(keyword)) {
             queryWrapper.like("name", keyword);
         }
+        if (params.get("id") != null) {
+            queryWrapper.eq("id", params.get("id"));
+        }
         IPage<SystemSupplier> listPage = systemSupplierService.page(mpPageConvert.<SystemSupplier>pageParamConvert(params), queryWrapper);
         return R.ok().setData(listPage);
     }

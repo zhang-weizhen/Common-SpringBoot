@@ -9,6 +9,7 @@ import com.suke.czx.common.base.AbstractController;
 import com.suke.czx.common.utils.Constant;
 import com.suke.czx.common.utils.HttpContextUtils;
 import com.suke.czx.common.utils.IPUtils;
+import com.suke.czx.modules.sys.entity.SysRole;
 import com.suke.czx.modules.sys.entity.SysUser;
 import com.suke.czx.modules.sys.service.SysMenuNewService;
 import com.suke.czx.modules.sys.service.SysUserService;
@@ -23,8 +24,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 系统用户
@@ -89,7 +93,14 @@ public class SysUserController extends AbstractController {
         userInfo.setLoginIp(IPUtils.getIpAddr(HttpContextUtils.getHttpServletRequest()));
         final String photo = sysUser.getPhoto();
         userInfo.setPhoto(photo == null ? "https://img0.baidu.com/it/u=1833472230,3849481738&fm=253&fmt=auto?w=200&h=200" : photo);
-        userInfo.setRoles(new String[]{sysUser.getUserId().equals(Constant.SUPER_ADMIN) ? "admin" : "common"});
+        if (sysUser.getUserId().equals(Constant.SUPER_ADMIN)) {
+            userInfo.setRoles(Collections.singletonList("admin"));
+        } else {
+            List<SysRole> userRole = getUserRole();
+            List<String> roleCOde = userRole.stream().map(SysRole::getCode).collect(Collectors.toList());
+            userInfo.setRoles(roleCOde);
+        }
+
         userInfo.setTime(DateUtil.now());
         userInfo.setAuthBtnList(new String[]{"btn.add", "btn.del", "btn.edit", "btn.link"});
         routerInfo.setUserInfo(userInfo);

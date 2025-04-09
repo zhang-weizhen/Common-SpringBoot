@@ -62,9 +62,12 @@ public class SysOssController extends AbstractController {
             throw new RRException("上传文件不能为空");
         }
         //上传文件
-        String suffix = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
-        String url = iCloudStorage.uploadSuffix(file.getBytes(), suffix);
+//        String suffix = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
 
+
+//        String url = iCloudStorage.uploadSuffix(file.getBytes(), suffix);
+
+        String url = iCloudStorage.uploadByName(file.getBytes(), file.getOriginalFilename());
         //保存文件信息
         SysOss ossEntity = new SysOss();
         ossEntity.setUrl(url);

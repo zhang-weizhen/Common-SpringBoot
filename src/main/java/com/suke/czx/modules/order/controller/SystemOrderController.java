@@ -2,29 +2,45 @@ package com.suke.czx.modules.order.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.suke.czx.common.annotation.SysLog;
 import com.suke.czx.common.base.AbstractController;
+import com.suke.czx.modules.material.entity.MaterialInfo;
+import com.suke.czx.modules.material.service.MaterialInfoService;
 import com.suke.czx.modules.order.constant.OrderConstant;
 import com.suke.czx.modules.order.dto.OrderDto;
+import com.suke.czx.modules.order.dto.OrderExportDto;
 import com.suke.czx.modules.order.dto.QueryOrderDto;
 import com.suke.czx.modules.order.dto.ReadingOrderDto;
 import com.suke.czx.modules.order.entity.SystemOrder;
 import com.suke.czx.modules.order.service.SystemOrderService;
+import com.suke.czx.modules.oss.cloud.ICloudStorage;
+import com.suke.czx.modules.oss.entity.SysOss;
+import com.suke.czx.modules.oss.service.SysOssService;
+import com.suke.czx.modules.supplier.entity.SystemSupplier;
+import com.suke.czx.modules.supplier.service.SystemSupplierService;
 import com.suke.czx.modules.sys.entity.SysUser;
 import com.suke.czx.modules.sys.service.SysUserService;
 import com.suke.zhjg.common.autofull.util.R;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -38,10 +54,19 @@ import java.util.*;
 @AllArgsConstructor
 @RequestMapping("/order")
 @Api(value = "SystemOrderController", tags = "订单管理")
+@Slf4j
 public class SystemOrderController extends AbstractController {
     private final SystemOrderService systemOrderService;
     @Autowired
     private SysUserService sysUserService;
+    @Autowired
+    private SystemSupplierService systemSupplierService;
+    @Autowired
+    private SysOssService sysOssService;
+    @Autowired
+    private ICloudStorage iCloudStorage;
+    @Autowired
+    private MaterialInfoService materialInfoService;
 
     /**
      * 列表
@@ -103,12 +128,20 @@ public class SystemOrderController extends AbstractController {
         Map<String, BigDecimal> count = new HashMap<>();
         count.put("totalReceivedAmount", BigDecimal.valueOf(0));
         count.put("totalAmount", BigDecimal.valueOf(0));
+        count.put("totalOutGoingAmount", BigDecimal.valueOf(0));
+        count.put("totalExpressFeeAmount", BigDecimal.valueOf(0));
+        count.put("totalProcessNum", BigDecimal.valueOf(0));
+        count.put("totalWeight", BigDecimal.valueOf(0));
         List<SystemOrder> list = systemOrderService.list(queryWrapper);
         if (!CollectionUtil.isNotEmpty(list)) {
             return R.ok().setData(count);
         }
         BigDecimal totalReceivedAmount = BigDecimal.valueOf(0);
         BigDecimal totalAmount = BigDecimal.valueOf(0);
+        BigDecimal totalOutGoingAmount = BigDecimal.valueOf(0);
+        BigDecimal totalExpressFeeAmount = BigDecimal.valueOf(0);
+        BigDecimal totalProcessNum = BigDecimal.valueOf(0);
+        BigDecimal totalWeight = BigDecimal.valueOf(0);
         for (SystemOrder order : list) {
             if (order.getReceivedAmount() != null) {
                 totalReceivedAmount = totalReceivedAmount.add(order.getReceivedAmount());
@@ -116,42 +149,78 @@ public class SystemOrderController extends AbstractController {
             if (order.getTotalAmount() != null) {
                 totalAmount = totalAmount.add(order.getTotalAmount());
             }
+            if (order.getOutGoingAmount() != null) {
+                totalOutGoingAmount = totalOutGoingAmount.add(order.getOutGoingAmount());
+            }
+            if (order.getExpressFee() != null) {
+                totalExpressFeeAmount = totalExpressFeeAmount.add(order.getExpressFee());
+            }
+            if (order.getProcessNum() != null) {
+                totalProcessNum = totalProcessNum.add(BigDecimal.valueOf(order.getProcessNum()));
+            }
+            if (StringUtils.isNotBlank(order.getWeight())) {
+                try {
+                    totalWeight = totalWeight.add(BigDecimal.valueOf(Long.parseLong(order.getWeight().trim())));
+                } catch (Exception e) {
+                    log.error("转换失败:{}", order.getWeight());
+                }
+            }
         }
         count.put("totalReceivedAmount", totalReceivedAmount);
         count.put("totalAmount", totalAmount);
+        count.put("totalOutGoingAmount", totalOutGoingAmount);
+        count.put("totalExpressFeeAmount", totalExpressFeeAmount);
+        count.put("totalProcessNum", totalProcessNum);
+        count.put("totalWeight", totalWeight);
         return R.ok().setData(count);
     }
 
-    private QueryWrapper<SystemOrder> setSelectValue(QueryWrapper<SystemOrder> queryWrapper , Map<String, Object> params) {
-        if (params.get("id") != null) {
+    private QueryWrapper<SystemOrder> setSelectValue(QueryWrapper<SystemOrder> queryWrapper, Map<String, Object> params) {
+        if (params.get("id") != null  && !"".equals(params.get("id"))) {
             queryWrapper.eq("id", params.get("id"));
         }
-        if (params.get("createBy") != null) {
+        if (params.get("createBy") != null && !"".equals(params.get("createBy"))) {
             queryWrapper.eq("create_by", params.get("createBy"));
         }
-//        if (params.get("customName") != null) {
-//            queryWrapper.like("custom_name", params.get("customName"));
-//        }
-        if (params.get("customCode") != null) {
+        if (params.get("customName") != null && !"".equals(params.get("customName"))) {
+
+            queryWrapper.like("custom_name", params.get("customName"));
+        }
+        if (params.get("customCode") != null && !"".equals(params.get("customCode"))) {
             queryWrapper.like("custom_code", params.get("customCode"));
         }
-        if (params.get("orderStatus") != null) {
-            queryWrapper.like("order_status", params.get("orderStatus"));
+        if (params.get("orderStatus") != null && !"".equals(params.get("orderStatus"))) {
+            queryWrapper.eq("order_status", params.get("orderStatus"));
         }
-        if (params.get("materialCode") != null) {
-            queryWrapper.like("material_code", params.get("materialCode"));
+        if (params.get("materialCode") != null && !"".equals(params.get("materialCode"))) {
+            queryWrapper.eq("material_code", params.get("materialCode"));
         }
-        if (params.get("sendingStatus") != null) {
-            queryWrapper.like("sending_status", params.get("sendingStatus"));
+        if (params.get("sendingStatus") != null && !"".equals(params.get("sendingStatus"))) {
+            queryWrapper.eq("sending_status", params.get("sendingStatus"));
         }
-        if (params.get("paymentStatus") != null) {
-            queryWrapper.like("payment_status", params.get("paymentStatus"));
+        if (params.get("paymentStatus") != null && !"".equals(params.get("paymentStatus"))) {
+            queryWrapper.eq("payment_status", params.get("paymentStatus"));
         }
-        if (params.get("startTime") != null) {
+        if (params.get("startTime") != null && !"".equals(params.get("startTime"))) {
             queryWrapper.gt("create_time", params.get("startTime"));
         }
-        if (params.get("endTime") != null) {
+        if (params.get("endTime") != null && !"".equals(params.get("endTime"))) {
             queryWrapper.lt("create_time", params.get("endTime"));
+        }
+        if (params.get("outGoingSupplier") != null && !"".equals(params.get("outGoingSupplier"))) {
+            queryWrapper.eq("out_going_supplier", params.get("outGoingSupplier"));
+        }
+        if (params.get("outGoing") != null && !"".equals(params.get("outGoing"))) {
+            queryWrapper.eq("out_going", params.get("outGoing"));
+        }
+        if (params.get("processingTechnology") != null && !"".equals(params.get("processingTechnology"))) {
+            queryWrapper.eq("processing_technology", params.get("processingTechnology"));
+        }
+        if (params.get("processNum") != null && !"".equals(params.get("processNum"))) {
+            queryWrapper.eq("process_num", params.get("processNum"));
+        }
+        if (params.get("weight") != null && !"".equals(params.get("weight"))) {
+            queryWrapper.eq("weight", params.get("weight"));
         }
         queryWrapper.orderByDesc("create_time");
         return queryWrapper;
@@ -171,7 +240,7 @@ public class SystemOrderController extends AbstractController {
         systemOrder.setOrderStatus(OrderConstant.SUBMITTING);
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        String id = "DD" + now.format(formatter) ;
+        String id = "DD" + now.format(formatter);
         systemOrder.setId(id);
         systemOrderService.save(systemOrder);
         return R.ok();
@@ -246,5 +315,42 @@ public class SystemOrderController extends AbstractController {
         return R.ok().setData(systemOrderService.downLoad(id));
     }
 
+    @ApiOperation(value = "订单列表导出")
+    @GetMapping("/export")
+    public void exportOrderHistory(@RequestParam Map<String, Object> params, HttpServletResponse response) throws IOException {
+        //查询列表数据
+        QueryWrapper<SystemOrder> queryWrapper = new QueryWrapper<>();
+        setSelectValue(queryWrapper, params);
+        Map<String, SysUser> userMap = new HashMap<>();
+        List<SystemOrder> list = systemOrderService.list(queryWrapper);
+        List<SystemSupplier> suppliers = systemSupplierService.list();
+        Map<String, MaterialInfo> materialInfoMap = materialInfoService.list().stream().collect(Collectors.toMap(MaterialInfo::getId, item -> item));
+        Map<String, SystemSupplier> supplierMap = suppliers.stream().collect(Collectors.toMap(SystemSupplier::getId, item -> item, (key1, key2) -> key1));
+        List<OrderExportDto> exportList = new ArrayList<>();
+        for (SystemOrder systemOrder : list) {
+            OrderExportDto orderExportDto = new OrderExportDto();
+            BeanUtil.copyProperties(systemOrder, orderExportDto);
+            SystemSupplier supplier = supplierMap.get(systemOrder.getOutGoingSupplier());
+            if (supplier != null) {
+                orderExportDto.setOutGoingSupplierName(supplier.getName());
+            }
+            SysOss sysOss = sysOssService.getById(systemOrder.getImageAttachment());
+            MaterialInfo materialInfo = materialInfoMap.get(systemOrder.getMaterialCode());
+            if (materialInfo != null) {
+                orderExportDto.setMaterialName(materialInfo.getName());
+            }
+            if (sysOss != null) {
+                orderExportDto.setUrl(new URL(iCloudStorage.getUrl(sysOss)));
+            }
+            exportList.add(orderExportDto);
+        }
 
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("对账表", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcel.write(response.getOutputStream(), OrderExportDto.class).sheet("模板").doWrite(exportList);
+    }
 }

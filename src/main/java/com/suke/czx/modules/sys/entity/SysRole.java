@@ -43,6 +43,9 @@ public class SysRole implements Serializable {
     @ApiModelProperty(value = "创建者ID")
     public String createUserId;
 
+    @ApiModelProperty(value = "角色编码")
+    public String code;
+
     @TableField(exist = false)
     @ApiModelProperty(value = "创建者名称")
     @AutoFullFieldSQL(sql = "select username as createUserName from sys_user where user_id = {createUserId}")

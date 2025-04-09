@@ -63,4 +63,13 @@ public class ReadingOrderDto {
     @JsonProperty(value = "remark")
     public String remark;
 
+    @ApiModelProperty(value = "下载人id")
+    @JsonProperty(value = "downloader")
+    private String downloader;
+
+    @ApiModelProperty(value = "下载人")
+    @JsonProperty(value = "downloaderName")
+    private String downloaderName;
+
+
 }

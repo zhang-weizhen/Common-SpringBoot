@@ -43,6 +43,9 @@ public class MaterialInfoController extends AbstractController {
         if (StrUtil.isNotEmpty(keyword)) {
             queryWrapper.like("name", keyword);
         }
+        if (params.get("id") != null) {
+            queryWrapper.eq("id", params.get("id"));
+        }
         IPage<MaterialInfo> listPage = materialInfoService.page(mpPageConvert.<MaterialInfo>pageParamConvert(params), queryWrapper);
         return R.ok().setData(listPage);
     }

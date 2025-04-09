@@ -35,6 +35,24 @@ public interface ICloudStorage {
     }
 
     /**
+     * 文件路径
+     * @param prefix 前缀
+     * @param name 名称
+     * @return 返回上传路径
+     */
+    default String getPathByName(String prefix, String name) {
+
+        //文件路径
+        String path = DateUtil.today() + "/" + name;
+
+        if(StrUtil.isNotBlank(prefix)){
+            path = prefix + "/" + path;
+        }
+
+        return path;
+    }
+
+    /**
      * 文件上传
      *
      * @param data 文件字节数组
@@ -42,6 +60,15 @@ public interface ICloudStorage {
      * @return 返回http地址
      */
     String upload(byte[] data, String path);
+
+    /**
+     * 文件上传
+     *
+     * @param data 文件字节数组
+     * @param name 文件名
+     * @return 返回http地址
+     */
+    String uploadByName(byte[] data, String name);
 
     /**
      * 文件上传

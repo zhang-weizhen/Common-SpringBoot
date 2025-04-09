@@ -2,6 +2,8 @@ package com.suke.czx.modules.sys.vo;
 
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * @Description //TODO $
  * @Date 12:50
@@ -16,7 +18,7 @@ public class UserInfoVO {
     public String loginIp;
     public String photo;
     public String time;
-    public String[] roles;
+    public List<String> roles;
     public String[] authBtnList;
 
 

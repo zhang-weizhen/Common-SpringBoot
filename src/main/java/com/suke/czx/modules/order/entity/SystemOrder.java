@@ -219,4 +219,8 @@ public class SystemOrder implements Serializable {
     @ApiModelProperty(value = "支付记录")
     @JsonProperty(value = "payAttachment")
     private String payAttachment;
+
+    @ApiModelProperty(value = "发货方式")
+    @JsonProperty(value = "delivery")
+    private String delivery;
 }
